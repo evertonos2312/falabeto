@@ -1,59 +1,147 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Fala Beto
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+MVP fullstack para controle financeiro via WhatsApp. O usuário registra gastos/receitas, acompanha pendências e recebe resumos. Construído com Laravel 12, Livewire 3 e Blade.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Laravel 12 + Livewire 3 + Blade
+- Tailwind CSS
+- MySQL (produção) e SQLite (testes)
+- Filament v3 (admin)
+- OpenAI via HTTP (NLU)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Principais recursos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Landing moderna com planos dinâmicos do banco
+- Cadastro e login por email ou telefone
+- Confirmação de WhatsApp (mock)
+- Checkout mock com criação de assinatura e trial
+- Catálogo de planos + itens de plano (features)
+- Dashboard financeiro com transações e dívidas
+- Webhook WhatsApp com interpretação por LLM
+- Logs de auditoria e rate limit por mensagens/dia
+- Admin panel com métricas e gestão de contratos
 
-## Learning Laravel
+## Requisitos
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP 8.4+
+- Composer
+- Node.js + npm
+- MySQL (ou SQLite para testes)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Setup rápido
 
-## Laravel Sponsors
+```bash
+composer install
+npm install
+npm run build
+cp .env.example .env
+php artisan key:generate
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Configure o banco no `.env` e rode:
 
-### Premium Partners
+```bash
+php artisan migrate --seed
+php artisan serve
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Variáveis de ambiente importantes
 
-## Contributing
+```env
+APP_URL=http://127.0.0.1:8000
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Banco
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Code of Conduct
+# Admin (Filament)
+ADMIN_EMAIL=admin@falabeto.test
+ADMIN_PASSWORD=secret
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# OpenAI (NLU)
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_TIMEOUT=20
 
-## Security Vulnerabilities
+# WhatsApp Webhook (mock)
+WHATSAPP_WEBHOOK_SECRET=changeme
+LOG_MESSAGE_BODY=false
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Stripe (stub)
+STRIPE_KEY=
+STRIPE_SECRET=
+STRIPE_WEBHOOK_SECRET=
+```
 
-## License
+## Rotas principais
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `/` Landing
+- `/register` Cadastro
+- `/login` Login
+- `/whatsapp/verify` Confirmação WhatsApp (mock)
+- `/plans` Escolha de plano
+- `/success` Pós-checkout
+- `/dashboard` Área do cliente
+- `/admin` Admin (Filament)
+
+## Webhook WhatsApp (mock)
+
+Endpoint:
+
+```txt
+POST /api/webhooks/whatsapp
+```
+
+Header obrigatório:
+
+```txt
+X-WEBHOOK-SECRET: <WHATSAPP_WEBHOOK_SECRET>
+```
+
+Payload mínimo:
+
+```json
+{
+  "phone": "+5511999999999",
+  "text": "gastei 12 no mercado",
+  "timestamp": "2026-01-31T12:00:00-03:00"
+}
+```
+
+Resposta:
+
+```json
+{
+  "reply_text": "Anotado! Mercado R$ 12...",
+  "action": "create_transaction",
+  "data": {}
+}
+```
+
+## Testes
+
+Os testes usam SQLite em memória (configurado no `phpunit.xml`).
+
+```bash
+./vendor/bin/pest
+```
+
+## Admin (Filament)
+
+- Login em `/admin`
+- Guard separado para `admins`
+- CRUD de planos com itens do plano (relation manager)
+- Gestão de assinaturas e métricas
+
+## Observações
+
+- Campos textuais sensíveis são criptografados.
+- Logs de mensagens respeitam `LOG_MESSAGE_BODY`.
+- Webhook faz fast-path antes de chamar LLM.
+
