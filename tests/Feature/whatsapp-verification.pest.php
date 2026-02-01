@@ -5,7 +5,9 @@ use App\Models\Client;
 use Livewire\Livewire;
 
 it('whatsapp verification flow', function () {
-    $client = Client::factory()->create();
+    $client = Client::factory()->create([
+        'email_verified_at' => now(),
+    ]);
 
     $this->actingAs($client, 'client');
 

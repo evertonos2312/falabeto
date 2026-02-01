@@ -1,6 +1,7 @@
 <section id="planos" class="mx-auto w-full max-w-6xl px-6 py-16">
     @php
-        $trialDays = (int) ($plans->where('trial_enabled', true)->min('trial_days') ?? 14);
+        $trialEnabled = (bool) settings('commercial.trial_enabled_default', true);
+        $trialDays = (int) settings('commercial.trial_days_default', 14);
 
         $featureCatalog = [
             'messages_per_day' => [
@@ -51,7 +52,13 @@
     <div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
             <h2 class="text-3xl font-semibold text-white">Planos simples e transparentes</h2>
-            <p class="mt-2 text-slate-300">Teste por {{ $trialDays }} dias em qualquer plano.</p>
+            <p class="mt-2 text-slate-300">
+                @if ($trialEnabled)
+                    Teste por {{ $trialDays }} dias em qualquer plano.
+                @else
+                    Planos mensais sem período de teste.
+                @endif
+            </p>
         </div>
         <a href="{{ route('register') }}"
            class="rounded-full border border-emerald-400/40 px-5 py-2 text-sm font-semibold text-emerald-200 hover:border-emerald-300">

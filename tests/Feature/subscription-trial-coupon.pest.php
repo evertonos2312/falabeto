@@ -33,8 +33,9 @@ it('coupon percent applies discount', function () {
 
     Coupon::create([
         'code' => 'OFF20',
-        'discount_type' => 'percent',
-        'discount_value_int' => 20,
+        'type' => 'percent',
+        'value_int' => 20,
+        'duration' => 'once',
         'is_active' => true,
     ]);
 
@@ -60,8 +61,9 @@ it('coupon amount applies discount', function () {
 
     Coupon::create([
         'code' => 'OFF300',
-        'discount_type' => 'amount',
-        'discount_value_int' => 300,
+        'type' => 'fixed',
+        'value_int' => 300,
+        'duration' => 'once',
         'is_active' => true,
     ]);
 

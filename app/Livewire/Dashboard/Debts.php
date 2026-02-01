@@ -50,6 +50,19 @@ class Debts extends Component
             'due_date' => ['required', 'date'],
             'status' => ['required', 'in:pending,paid,overdue'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'creditor_name.required' => 'O nome do credor é obrigatório.',
+            'creditor_name.string' => 'O nome do credor é inválido.',
+            'creditor_name.max' => 'O nome do credor deve ter no máximo 255 caracteres.',
+            'amount_cents.required' => 'O valor é obrigatório.',
+            'amount_cents.integer' => 'O valor deve ser um número inteiro.',
+            'amount_cents.min' => 'O valor deve ser maior que zero.',
+            'due_date.required' => 'A data de vencimento é obrigatória.',
+            'due_date.date' => 'A data de vencimento é inválida.',
+            'status.required' => 'O status é obrigatório.',
+            'status.in' => 'Selecione um status válido.',
+            'notes.string' => 'As observações são inválidas.',
+            'notes.max' => 'As observações devem ter no máximo 1000 caracteres.',
         ]);
 
         $client = Auth::guard('client')->user();

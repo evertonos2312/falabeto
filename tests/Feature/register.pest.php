@@ -12,7 +12,7 @@ it('register creates client and redirects', function () {
         ->set('password_confirmation', 'password123')
         ->set('termsAccepted', true)
         ->call('register')
-        ->assertRedirect(route('whatsapp.verify'));
+        ->assertSet('step', 'verify_email');
 
     $this->assertDatabaseHas('clients', [
         'email' => 'maria@example.com',

@@ -92,7 +92,8 @@ class WhatsAppWebhookController extends Controller
 
             $usage->increment('messages_in');
 
-            if ($usage->messages_in > $limit) {
+            $rateLimitEnabled = settings('security.rate_limit_enabled', true);
+            if ($rateLimitEnabled && $usage->messages_in > $limit) {
                 $this->logMessage($client->id, $phone, 'inbound', $text, [
                     'action' => 'rate_limited',
                     'ip' => $request->ip(),
@@ -295,7 +296,7 @@ class WhatsAppWebhookController extends Controller
     {
         $snippet = Str::of($body)->replaceMatches('/\s+/', ' ')->substr(0, 64)->toString();
         $hash = hash('sha256', $body);
-        $storeBody = filter_var(env('LOG_MESSAGE_BODY', false), FILTER_VALIDATE_BOOL);
+        $storeBody = (bool) settings('security.log_message_body', false);
 
         return MessageLog::create([
             'client_id' => $clientId,

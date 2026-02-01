@@ -1,23 +1,17 @@
 <div class="bg-slate-950">
+    @php
+        $trialEnabled = (bool) settings('commercial.trial_enabled_default', true);
+        $trialDays = (int) settings('commercial.trial_days_default', 14);
+    @endphp
     <header class="border-b border-white/5">
+        @php
+            $logoPath = settings('branding.logo_path');
+            $logoUrl = $logoPath ? asset('storage/' . $logoPath) : asset('images/logo.png');
+        @endphp
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-            <div class="flex items-center gap-3">
-                <div class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 ring-1 ring-emerald-400/40">
-                    <svg class="h-5 w-5 text-emerald-200" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <!-- chat bubble custom (não é o do WhatsApp) -->
-                        <path
-                            d="M7.5 6.5h9A3.5 3.5 0 0 1 20 10v4A3.5 3.5 0 0 1 16.5 17.5H12l-3.5 2v-2H7.5A3.5 3.5 0 0 1 4 14v-4A3.5 3.5 0 0 1 7.5 6.5Z"
-                            stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"
-                        />
-                        <!-- small "spark" / check-ish detail to feel modern -->
-                        <path
-                            d="M8.8 12.2l1.6 1.6 3.8-4"
-                            stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
-                        />
-                    </svg>
-                </div>
-                <span class="text-lg font-semibold tracking-tight">Fala, Beto!</span>
-            </div>
+            <a href="{{ url('/') }}" class="flex items-center">
+                <img src="{{ $logoUrl }}" alt="Fala, Beto!" class="h-9">
+            </a>
             <nav class="hidden items-center gap-6 text-sm text-slate-300 md:flex">
                 <a href="#como-funciona" class="hover:text-white">Como funciona</a>
                 <a href="#beneficios" class="hover:text-white">Benefícios</a>
@@ -36,13 +30,10 @@
     <main>
         <section class="relative overflow-hidden">
             <div
-                class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_55%)]"></div>
+                class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_55%)]"></div>
             <div class="mx-auto w-full max-w-6xl px-6 py-20">
                 <div class="grid gap-12 md:grid-cols-[1.2fr_0.8fr] md:items-center">
                     <div>
-                        <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-200">
-                            WhatsApp primeiro
-                        </p>
                         <h1 class="text-4xl font-semibold tracking-tight text-white md:text-5xl">
                             Seu controle financeiro no WhatsApp, do jeito mais simples
                         </h1>
@@ -52,11 +43,15 @@
                         </p>
                         <div class="mt-8 flex flex-wrap gap-4">
                             <a href="{{ route('register') }}"
-                               class="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25">
-                                Começar teste de 14 dias
+                               class="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 cursor-pointer">
+                                @if ($trialEnabled)
+                                    Começar teste de {{ $trialDays }} dias
+                                @else
+                                    Começar agora
+                                @endif
                             </a>
-                            <a href="#planos"
-                               class="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-white/30">
+                            <a href="{{ url('/#planos') }}"
+                               class="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-white/30 cursor-pointer">
                                 Ver planos
                             </a>
                         </div>
@@ -65,10 +60,12 @@
                                 <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                                 Ativação em minutos
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-                                14 dias para testar
-                            </div>
+                            @if ($trialEnabled)
+                                <div class="flex items-center gap-2">
+                                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                                    {{ $trialDays }} dias para testar
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-emerald-500/10">

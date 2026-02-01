@@ -21,6 +21,7 @@ class Subscription extends Model
         'next_renewal_at',
         'cancel_at_period_end',
         'coupon_id',
+        'coupon_snapshot_json',
         'gateway',
         'gateway_customer_id',
         'gateway_subscription_id',
@@ -33,6 +34,7 @@ class Subscription extends Model
         'current_period_end' => 'datetime',
         'next_renewal_at' => 'datetime',
         'cancel_at_period_end' => 'boolean',
+        'coupon_snapshot_json' => 'array',
     ];
 
     public function client()

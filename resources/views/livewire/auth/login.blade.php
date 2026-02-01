@@ -52,6 +52,13 @@
 
         <section class="flex items-center justify-center px-6 py-12 md:px-8 md:py-16">
             <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-emerald-500/10">
+                @php
+                    $logoPath = settings('branding.logo_path');
+                    $logoUrl = $logoPath ? asset('storage/' . $logoPath) : asset('images/logo.png');
+                @endphp
+                <a href="{{ url('/') }}" class="mb-6 flex items-center justify-center">
+                    <img src="{{ $logoUrl }}" alt="Fala, Beto!" class="h-10">
+                </a>
                 <div class="mb-6">
                     <h1 class="text-2xl font-semibold text-white">Bem-vindo de volta</h1>
                     <p class="mt-2 text-sm text-slate-300">Acesse com email ou telefone.</p>
@@ -68,7 +75,7 @@
                         <input type="password" wire:model.defer="password" class="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20">
                         @error('password') <p class="mt-1 text-xs text-rose-300">{{ $message }}</p> @enderror
                     </div>
-                    <button type="submit" class="w-full rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
+                    <button type="submit" class="w-full cursor-pointer rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
                         Entrar
                     </button>
                 </form>

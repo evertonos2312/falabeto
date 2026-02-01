@@ -3,6 +3,7 @@
 namespace App\Livewire\Auth;
 
 use Illuminate\Support\Facades\Auth;
+use App\Support\OnboardingResolver;
 use Livewire\Component;
 
 class Login extends Component
@@ -15,6 +16,11 @@ class Login extends Component
         $this->validate([
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
+        ], [
+            'login.required' => 'O campo email ou celular é obrigatório.',
+            'login.string' => 'O campo email ou celular é inválido.',
+            'password.required' => 'O campo senha é obrigatório.',
+            'password.string' => 'O campo senha é inválido.',
         ]);
 
         $field = str_contains($this->login, '@') ? 'email' : 'phone_e164';
@@ -29,11 +35,11 @@ class Login extends Component
                 request()->session()->regenerate();
             }
 
-            $this->redirectRoute('whatsapp.verify');
+            $this->redirect(OnboardingResolver::nextRouteFor(Auth::guard('client')->user()));
             return;
         }
 
-        $this->addError('login', 'Credenciais inválidas.');
+        $this->addError('login', 'Email/celular ou senha inválidos.');
     }
 
     public function render()

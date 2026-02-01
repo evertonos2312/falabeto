@@ -19,6 +19,8 @@ class Client extends Authenticatable
         'password',
         'timezone',
         'whatsapp_verified_at',
+        'email_verified_at',
+        'onboarding_status',
         'payment_status',
         'trial_used_at',
         'terms_accepted_at',
@@ -36,6 +38,7 @@ class Client extends Authenticatable
     {
         return [
             'whatsapp_verified_at' => 'datetime',
+            'email_verified_at' => 'datetime',
             'trial_used_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'privacy_accepted_at' => 'datetime',

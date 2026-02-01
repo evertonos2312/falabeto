@@ -58,6 +58,21 @@ class Transactions extends Component
             'category' => ['nullable', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'type.required' => 'O tipo é obrigatório.',
+            'type.in' => 'Selecione um tipo válido.',
+            'amount_cents.required' => 'O valor é obrigatório.',
+            'amount_cents.integer' => 'O valor deve ser um número inteiro.',
+            'amount_cents.min' => 'O valor deve ser maior que zero.',
+            'occurred_at.required' => 'A data é obrigatória.',
+            'occurred_at.date' => 'A data é inválida.',
+            'category.string' => 'A categoria é inválida.',
+            'category.max' => 'A categoria deve ter no máximo 100 caracteres.',
+            'description.required' => 'A descrição é obrigatória.',
+            'description.string' => 'A descrição é inválida.',
+            'description.max' => 'A descrição deve ter no máximo 500 caracteres.',
+            'notes.string' => 'As observações são inválidas.',
+            'notes.max' => 'As observações devem ter no máximo 1000 caracteres.',
         ]);
 
         $client = Auth::guard('client')->user();

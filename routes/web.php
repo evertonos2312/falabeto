@@ -6,6 +6,7 @@ use App\Livewire\CheckoutMock;
 use App\Livewire\Dashboard\Debts;
 use App\Livewire\Dashboard\Home as DashboardHome;
 use App\Livewire\Dashboard\Transactions as DashboardTransactions;
+use App\Livewire\EmailVerify;
 use App\Livewire\Landing;
 use App\Livewire\PlanSelector;
 use App\Livewire\SuccessPage;
@@ -33,25 +34,27 @@ Route::post('/logout', function (Request $request) {
     return redirect()->route('home');
 })->middleware('auth:client')->name('logout');
 
-Route::middleware('auth:client')->group(function () {
+Route::middleware(['auth:client', 'onboarding'])->group(function () {
     Route::get('/whatsapp/verify', WhatsappVerify::class)->name('whatsapp.verify');
     Route::post('/whatsapp/verify', function () {
         return redirect()->route('whatsapp.verify');
     })->name('whatsapp.verify.post');
+
+    Route::get('/email/verify', EmailVerify::class)->name('email.verify');
 
     Route::get('/plans', PlanSelector::class)->name('plans');
 
     Route::post('/checkout/mock', function (Request $request) {
         $validated = $request->validate([
             'plan_code' => ['required', 'exists:plans,code'],
-            'coupon_code' => ['nullable', 'string', 'max:50'],
+            'coupon_code' => ['nullable', 'string', 'max:50', 'regex:/^[A-Z0-9_]+$/i'],
         ]);
 
         $plan = Plan::query()->where('code', $validated['plan_code'])->firstOrFail();
 
         session([
             'selected_plan_code' => $plan->code,
-            'selected_coupon_code' => $validated['coupon_code'] ?? null,
+            'selected_coupon_code' => isset($validated['coupon_code']) ? strtoupper($validated['coupon_code']) : null,
         ]);
 
         return redirect()->route('checkout.mock');
@@ -60,8 +63,11 @@ Route::middleware('auth:client')->group(function () {
     Route::get('/checkout/mock', CheckoutMock::class)->name('checkout.mock');
 
     Route::get('/success', SuccessPage::class)->name('success');
-    Route::get('/dashboard', DashboardHome::class)->name('dashboard');
-    Route::get('/transactions', DashboardTransactions::class)->name('transactions');
-    Route::get('/debts', Debts::class)->name('debts');
-    Route::get('/dashboard/subscription', SubscriptionShow::class)->name('subscription.show');
+
+    Route::middleware(['subscription.active'])->group(function () {
+        Route::get('/dashboard', DashboardHome::class)->name('dashboard');
+        Route::get('/transactions', DashboardTransactions::class)->name('transactions');
+        Route::get('/debts', Debts::class)->name('debts');
+        Route::get('/dashboard/subscription', SubscriptionShow::class)->name('subscription.show');
+    });
 });

@@ -14,6 +14,11 @@ class WhatsappVerify extends Component
     {
         $client = Auth::guard('client')->user();
 
+        if ($client && ! $client->email_verified_at) {
+            session()->flash('warning', 'Confirme seu email antes de validar o WhatsApp.');
+            $this->redirectRoute('email.verify');
+        }
+
         if ($client?->whatsapp_verified_at) {
             $this->redirectRoute('plans');
         }
@@ -31,17 +36,23 @@ class WhatsappVerify extends Component
     {
         $this->validate([
             'code' => ['required', 'digits:6'],
+        ], [
+            'code.required' => 'O campo código é obrigatório.',
+            'code.digits' => 'O código deve ter 6 dígitos.',
         ]);
 
         $expected = session('whatsapp_code');
 
         if (! $expected || $this->code !== $expected) {
-            $this->addError('code', 'Código inválido.');
+            $this->addError('code', 'O código informado é inválido.');
             return;
         }
 
         $client = Auth::guard('client')->user();
-        $client->forceFill(['whatsapp_verified_at' => now()])->save();
+        $client->forceFill([
+            'whatsapp_verified_at' => now(),
+            'onboarding_status' => 'pending_checkout',
+        ])->save();
 
         session()->forget('whatsapp_code');
 

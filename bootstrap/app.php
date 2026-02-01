@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\RequestIdMiddleware::class);
+        $middleware->alias([
+            'subscription.active' => \App\Http\Middleware\EnsureActiveSubscription::class,
+            'onboarding' => \App\Http\Middleware\EnsureOnboardingCompleted::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

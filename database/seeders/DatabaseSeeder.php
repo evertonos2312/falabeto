@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             PlanItemSeeder::class,
             AdminSeeder::class,
+            SettingsSeeder::class,
         ]);
     }
 }

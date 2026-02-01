@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('coupons', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('code')->unique();
-            $table->enum('discount_type', ['percent', 'amount']);
-            $table->integer('discount_value_int');
+            $table->enum('discount_type', ['percent', 'amount'])->nullable();
+            $table->integer('discount_value_int')->nullable();
             $table->integer('max_redemptions')->nullable();
             $table->integer('redeemed_count')->default(0);
             $table->timestamp('valid_from')->nullable();

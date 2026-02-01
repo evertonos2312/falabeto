@@ -3,12 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\Coupon;
-use App\Models\CouponRedemption;
 use App\Models\PaymentOrder;
 use App\Models\Plan;
 use App\Models\PlanItem;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
+use App\Services\CouponService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -62,18 +62,39 @@ class CheckoutMock extends Component
         $this->computeFinalPrice();
 
         DB::transaction(function () use ($client) {
-            PaymentOrder::create([
-                'client_id' => $client->id,
-                'plan_id' => $this->plan->id,
-                'amount_cents' => $this->finalPriceCents,
-                'status' => 'paid',
-                'provider' => 'stripe_mock',
-                'trial_ends_at' => $client->trial_used_at ? null : now()->addDays(30),
-            ]);
+            $couponService = app(CouponService::class);
+            $finalAmount = $couponService->calculateFinalAmount($this->plan->price_cents, $this->coupon);
+            $freeForever = $this->coupon && $couponService->isFreeForever($this->coupon, $finalAmount);
+
+            if (! $freeForever) {
+                PaymentOrder::create([
+                    'client_id' => $client->id,
+                    'plan_id' => $this->plan->id,
+                    'amount_cents' => $this->finalPriceCents,
+                    'status' => 'paid',
+                    'provider' => 'stripe_mock',
+                    'trial_ends_at' => $client->trial_used_at ? null : now()->addDays(30),
+                ]);
+            }
 
             $eligibleForTrial = $client->trial_used_at === null;
-            $trialEndsAt = $eligibleForTrial ? now()->addDays(30) : null;
+            $trialDays = (int) settings('commercial.trial_days_default', 30);
+            $trialEnabled = (bool) settings('commercial.trial_enabled_default', true);
+            $trialEndsAt = $eligibleForTrial && $trialEnabled ? now()->addDays($trialDays) : null;
             $status = $eligibleForTrial ? 'trialing' : 'active';
+            $currentStart = $eligibleForTrial ? null : now();
+            $currentEnd = $eligibleForTrial ? null : now()->addMonth();
+            $nextRenewal = $trialEndsAt ?? now()->addMonth();
+            $gateway = 'mock';
+
+            if ($freeForever) {
+                $status = 'active';
+                $trialEndsAt = null;
+                $currentStart = now();
+                $currentEnd = now()->addMonth();
+                $nextRenewal = now()->addMonth();
+                $gateway = 'complimentary';
+            }
 
             $subscription = Subscription::create([
                 'client_id' => $client->id,
@@ -81,11 +102,10 @@ class CheckoutMock extends Component
                 'status' => $status,
                 'started_at' => now(),
                 'trial_ends_at' => $trialEndsAt,
-                'next_renewal_at' => $trialEndsAt ?? now()->addMonth(),
-                'current_period_start' => $eligibleForTrial ? null : now(),
-                'current_period_end' => $eligibleForTrial ? null : now()->addMonth(),
-                'coupon_id' => $this->coupon?->id,
-                'gateway' => 'mock',
+                'next_renewal_at' => $nextRenewal,
+                'current_period_start' => $currentStart,
+                'current_period_end' => $currentEnd,
+                'gateway' => $gateway,
             ]);
 
             SubscriptionItem::create([
@@ -121,21 +141,27 @@ class CheckoutMock extends Component
             }
 
             if ($this->coupon) {
-                CouponRedemption::create([
-                    'coupon_id' => $this->coupon->id,
-                    'client_id' => $client->id,
-                    'subscription_id' => $subscription->id,
-                    'redeemed_at' => now(),
-                ]);
-
-                $this->coupon->increment('redeemed_count');
+                app(CouponService::class)->applyToSubscription(
+                    $this->coupon,
+                    $subscription,
+                    $client,
+                    $this->plan->price_cents,
+                    ['source' => $freeForever ? 'checkout_free_forever' : 'checkout']
+                );
             }
 
-            if ($eligibleForTrial) {
+            if ($eligibleForTrial && ! $freeForever) {
                 $client->forceFill(['trial_used_at' => now()])->save();
             }
 
-            $client->forceFill(['payment_status' => 'paid'])->save();
+            if ($freeForever && $client->trial_used_at === null) {
+                $client->forceFill(['trial_used_at' => now()])->save();
+            }
+
+            $client->forceFill([
+                'payment_status' => 'paid',
+                'onboarding_status' => 'active',
+            ])->save();
         });
 
         session()->forget(['selected_plan_code', 'selected_coupon_code']);
@@ -152,42 +178,17 @@ class CheckoutMock extends Component
             return;
         }
 
-        $coupon = Coupon::query()
-            ->where('code', strtoupper($this->couponCode))
-            ->first();
-
-        if (! $coupon || ! $coupon->is_active) {
-            $this->addError('couponCode', 'Cupom inválido ou inativo.');
-            return;
-        }
-
-        if ($coupon->valid_from && now()->lt($coupon->valid_from)) {
-            $this->addError('couponCode', 'Cupom ainda não está válido.');
-            return;
-        }
-
-        if ($coupon->valid_until && now()->gt($coupon->valid_until)) {
-            $this->addError('couponCode', 'Cupom expirado.');
-            return;
-        }
-
-        if ($coupon->max_redemptions !== null && $coupon->redeemed_count >= $coupon->max_redemptions) {
-            $this->addError('couponCode', 'Cupom esgotado.');
-            return;
-        }
-
         $clientId = Auth::guard('client')->id();
+        $client = $clientId ? Auth::guard('client')->user() : null;
 
-        if ($clientId && CouponRedemption::query()
-            ->where('coupon_id', $coupon->id)
-            ->where('client_id', $clientId)
-            ->exists()
-        ) {
-            $this->addError('couponCode', 'Você já usou este cupom.');
-            return;
+        try {
+            if (! $client) {
+                return;
+            }
+            $this->coupon = app(CouponService::class)->validateCoupon($this->couponCode, $client, $this->plan);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->addError('couponCode', $e->validator->errors()->first('coupon') ?? 'Cupom inválido.');
         }
-
-        $this->coupon = $coupon;
     }
 
     protected function computeFinalPrice(): void
@@ -198,18 +199,10 @@ class CheckoutMock extends Component
         }
 
         $base = $this->plan->price_cents;
-        $discount = 0;
+        $discount = $this->coupon ? app(CouponService::class)->calculateDiscountCents($this->coupon, $base) : 0;
 
-        if ($this->coupon) {
-            if ($this->coupon->discount_type === 'percent') {
-                $discount = (int) round($base * ($this->coupon->discount_value_int / 100));
-            } else {
-                $discount = $this->coupon->discount_value_int;
-            }
-        }
-
-        $this->discountCents = min($base, max(0, $discount));
-        $this->finalPriceCents = max(0, $base - $this->discountCents);
+        $this->discountCents = $discount;
+        $this->finalPriceCents = max(0, $base - $discount);
     }
 
     public function render()

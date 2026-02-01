@@ -15,10 +15,12 @@ class CouponRedemption extends Model
         'client_id',
         'subscription_id',
         'redeemed_at',
+        'meta_json',
     ];
 
     protected $casts = [
         'redeemed_at' => 'datetime',
+        'meta_json' => 'array',
     ];
 
     public function coupon()

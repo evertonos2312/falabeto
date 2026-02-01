@@ -14,7 +14,7 @@ it('login with email', function () {
         ->set('login', 'ana@example.com')
         ->set('password', 'password123')
         ->call('authenticate')
-        ->assertRedirect(route('whatsapp.verify'));
+        ->assertRedirect(route('email.verify'));
 
     $this->assertAuthenticatedAs($client, 'client');
 });
@@ -29,7 +29,7 @@ it('login with phone', function () {
         ->set('login', '+5511988887777')
         ->set('password', 'password123')
         ->call('authenticate')
-        ->assertRedirect(route('whatsapp.verify'));
+        ->assertRedirect(route('email.verify'));
 
     $this->assertAuthenticatedAs($client, 'client');
 });

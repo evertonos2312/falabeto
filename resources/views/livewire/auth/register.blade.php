@@ -1,5 +1,6 @@
 @php
-    $trialDays = (int) config('falabeto.trial_days_default', 14);
+    $trialDays = (int) settings('commercial.trial_days_default', 14);
+    $trialEnabled = (bool) settings('commercial.trial_enabled_default', true);
 @endphp
 
 <div class="min-h-screen bg-slate-950">
@@ -56,9 +57,23 @@
 
         <section class="flex items-center justify-center px-6 py-12 md:px-8 md:py-16">
             <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-emerald-500/10">
+                @php
+                    $logoPath = settings('branding.logo_path');
+                    $logoUrl = $logoPath ? asset('storage/' . $logoPath) : asset('images/logo.png');
+                @endphp
+                <a href="{{ url('/') }}" class="mb-6 flex items-center justify-center">
+                    <img src="{{ $logoUrl }}" alt="Fala, Beto!" class="h-10">
+                </a>
+                @if ($step === 'form')
                 <div class="mb-6">
                     <h1 class="text-2xl font-semibold text-white">Crie sua conta</h1>
-                    <p class="mt-2 text-sm text-slate-300">Teste por {{ $trialDays }} dias sem cartão e comece em minutos.</p>
+                    <p class="mt-2 text-sm text-slate-300">
+                        @if ($trialEnabled)
+                            Teste por {{ $trialDays }} dias sem cartão e comece em minutos.
+                        @else
+                            Comece em minutos com seu plano ativo.
+                        @endif
+                    </p>
                 </div>
 
                 <form wire:submit="register" class="space-y-4">
@@ -108,16 +123,40 @@
                         <input id="termsAccepted" type="checkbox" wire:model.defer="termsAccepted" class="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/60 text-emerald-500 focus:ring-emerald-400/20">
                         <label for="termsAccepted">
                             Li e aceito os
-                            <button type="button" data-open-modal="terms" class="text-emerald-200 hover:text-emerald-100">Termos de Uso</button>
+                            <button type="button" data-open-modal="terms" class="cursor-pointer text-emerald-200 hover:text-emerald-100">Termos de Uso</button>
                             e a
-                            <button type="button" data-open-modal="privacy" class="text-emerald-200 hover:text-emerald-100">Política de Privacidade</button>.
+                            <button type="button" data-open-modal="privacy" class="cursor-pointer text-emerald-200 hover:text-emerald-100">Política de Privacidade</button>.
                         </label>
                     </div>
                     @error('termsAccepted') <p class="mt-1 text-xs text-rose-300">{{ $message }}</p> @enderror
-                    <button type="submit" class="w-full rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
+                    <button type="submit" class="w-full cursor-pointer rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
                         Continuar
                     </button>
                 </form>
+                @else
+                <div class="mb-6">
+                    <h1 class="text-2xl font-semibold text-white">Confirme seu email</h1>
+                    <p class="mt-2 text-sm text-slate-300">Enviamos um código de 6 dígitos para {{ $email }}.</p>
+                </div>
+
+                    <div wire:poll.1s="updateCooldown"></div>
+                    <form wire:submit="verifyEmailCode" class="space-y-4">
+                    <div>
+                        <label class="text-sm text-slate-300">Código</label>
+                        <input type="text" wire:model.defer="email_code" maxlength="6" class="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20">
+                        @error('email_code') <p class="mt-1 text-xs text-rose-300">{{ $message }}</p> @enderror
+                    </div>
+                    <button type="submit" class="w-full cursor-pointer rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
+                        Verificar
+                    </button>
+                        <button type="button" wire:click="resendEmailCode" class="w-full cursor-pointer rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:border-emerald-300" @disabled($cooldownRemaining > 0)>
+                            Reenviar código
+                        </button>
+                        @if ($cooldownRemaining > 0)
+                            <p class="text-xs text-slate-400">Aguarde {{ $cooldownRemaining }}s para reenviar.</p>
+                        @endif
+                    </form>
+                @endif
 
                 <p class="mt-6 text-center text-sm text-slate-400">
                     Já tem conta?
@@ -130,53 +169,4 @@
     <x-terms-modal />
     <x-privacy-modal />
 
-    <script>
-        (function () {
-            const openModal = (name) => {
-                const modal = document.querySelector(`[data-modal="${name}"]`);
-                if (!modal) return;
-                modal.style.display = 'flex';
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                requestAnimationFrame(() => {
-                    modal.querySelector('[data-modal-overlay]')?.classList.add('opacity-100');
-                    modal.querySelector('[data-modal-panel]')?.classList.add('opacity-100', 'translate-y-0');
-                });
-            };
-
-            const closeModal = (modal) => {
-                const overlay = modal.querySelector('[data-modal-overlay]');
-                const panel = modal.querySelector('[data-modal-panel]');
-                overlay?.classList.remove('opacity-100');
-                panel?.classList.remove('opacity-100', 'translate-y-0');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    modal.style.display = 'none';
-                }, 200);
-            };
-
-            document.addEventListener('click', (event) => {
-                const open = event.target.closest('[data-open-modal]');
-                if (open) {
-                    event.preventDefault();
-                    openModal(open.getAttribute('data-open-modal'));
-                    return;
-                }
-
-                const close = event.target.closest('[data-close-modal]');
-                if (close) {
-                    const modal = close.closest('[data-modal]');
-                    if (modal) closeModal(modal);
-                    return;
-                }
-
-                const overlay = event.target.closest('[data-modal-overlay]');
-                if (overlay) {
-                    const modal = overlay.closest('[data-modal]');
-                    if (modal) closeModal(modal);
-                }
-            });
-        })();
-    </script>
 </div>

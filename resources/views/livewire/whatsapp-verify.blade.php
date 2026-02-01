@@ -4,7 +4,7 @@
         <p class="mt-2 text-sm text-slate-300">Vamos enviar um código para o seu WhatsApp. (Mock)</p>
 
         <div class="mt-6 space-y-4">
-            <button wire:click="sendCode" class="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
+            <button wire:click="sendCode" class="cursor-pointer rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20">
                 Enviar código
             </button>
 
@@ -20,7 +20,7 @@
                     <input type="text" wire:model.defer="code" maxlength="6" class="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20">
                     @error('code') <p class="mt-1 text-xs text-rose-300">{{ $message }}</p> @enderror
                 </div>
-                <button type="submit" class="w-full rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:border-emerald-300">
+                <button type="submit" class="w-full cursor-pointer rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:border-emerald-300">
                     Validar código
                 </button>
             </form>
